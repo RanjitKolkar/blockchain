@@ -61,25 +61,92 @@ st.subheader("📖 Blockchain Concepts")
 
 with st.expander("🧱 What is a Blockchain?"):
     st.markdown("""
-    - Digital ledger of blocks linked by hashes.
-    - Each block contains verified transaction data.
+    - A distributed and immutable digital ledger.
+    - Consists of blocks linked by cryptographic hashes.
+    - Decentralized: No single point of control.
+    - Transparent: Anyone can view the public ledger.
+    - Secure: Data once written cannot be easily changed.
+    - Trustless system: No need to trust a third party.
+    - Each block contains timestamp, transactions, nonce, and hash.
     """)
 
 with st.expander("⛏️ Mining Explained"):
     st.markdown("""
-    - Mining adds transactions to the blockchain by solving puzzles.
-    - It ensures network security and prevents double-spending.
+    - Process of validating transactions and adding them to the blockchain.
+    - Miners solve cryptographic puzzles (Proof-of-Work).
+    - Rewards include new coins and transaction fees.
+    - Secures the network and maintains consensus.
+    - High computational effort required (hashing).
+    - Block difficulty adjusts over time.
+    - Popular mining algorithms: SHA-256 (Bitcoin), Ethash (Ethereum).
     """)
 
-with st.expander("🔐 Why Cryptography?"):
+with st.expander("🔐 Cryptography in Blockchain"):
     st.markdown("""
-    - Hashing ensures integrity.
-    - Signatures ensure transaction ownership.
+    - Hashing: Converts input data into fixed-length hash (e.g., SHA-256).
+    - Digital Signatures: Ensures authenticity of sender using private keys.
+    - Public-Key Cryptography: Transactions signed with private key, verified with public key.
+    - Merkle Tree: Hierarchical hash tree for fast verification of transactions in blocks.
+    - Nonce: A number used once to achieve desired hash pattern.
+    - Immutable Ledger: Tampering with one block affects all following blocks.
     """)
 
-with st.expander("🧾 Why It's Useful for Investigators"):
+with st.expander("🧾 Blockchain for Investigators"):
     st.markdown("""
-    - Public ledgers can be traced.
-    - Wallet addresses may link to real-world identities via KYC.
-    - Can reveal undeclared income.
+    - Helps trace digital currency trails.
+    - Wallet addresses are pseudo-anonymous.
+    - KYC-compliant exchanges can link addresses to real users.
+    - Used to detect money laundering, undeclared income.
+    - Chain analysis tools can cluster wallets by entity.
+    - Historical transactions available publicly.
+    - Supports forensic tracing and audit trails.
+    """)
+
+with st.expander("🧩 Key Terms and Definitions"):
+    st.markdown("""
+    **Block**: A container of data (transactions) with a unique hash and a pointer to the previous block.
+
+    **Genesis Block**: The first block in a blockchain.
+
+    **Ledger**: Record of all transactions; in blockchain, it is distributed and shared.
+
+    **Node**: A computer that maintains a copy of the blockchain and validates transactions.
+
+    **Consensus Mechanism**: Rules that nodes follow to agree on the validity of transactions (e.g., PoW, PoS).
+
+    **Proof of Work (PoW)**: Mining algorithm where miners compete to solve complex problems.
+
+    **Proof of Stake (PoS)**: Validators are chosen based on stake (amount held) to validate transactions.
+
+    **Smart Contracts**: Self-executing code on blockchain that runs when predefined conditions are met.
+
+    **Wallet**: Digital tool to send, receive, and store cryptocurrency using public-private key pair.
+
+    **Address**: A hashed public key used as a destination for crypto transactions.
+
+    **Private Key**: A secret key used to sign transactions.
+
+    **Public Key**: A key that can be shared; used to verify signatures and receive funds.
+
+    **Transaction Fee**: Fee paid to miners/validators to prioritize and include the transaction in the block.
+
+    **Fork**: A split in the blockchain protocol (soft fork – backward-compatible, hard fork – not compatible).
+
+    **Exchange**: A platform to trade fiat with crypto or between cryptocurrencies.
+
+    **Token**: A digital asset built on an existing blockchain (e.g., ERC-20 tokens on Ethereum).
+
+    **Altcoin**: Any cryptocurrency other than Bitcoin.
+
+    **Stablecoin**: A crypto asset pegged to a stable value like USD (e.g., USDT, USDC).
+
+    **NFT (Non-Fungible Token)**: Unique cryptographic token representing ownership of a digital asset.
+
+    **Cold Wallet**: Offline crypto storage method for enhanced security.
+
+    **Hot Wallet**: Internet-connected wallet for ease of use but more vulnerable.
+
+    **Gas**: Fee for executing operations (smart contracts, transactions) on Ethereum.
+
+    **Blockchain Explorer**: Tool to view blockchain data like blocks, transactions, and addresses (e.g., blockchain.com).
     """)
