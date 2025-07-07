@@ -3,6 +3,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 from blockchain import Blockchain
 from utils import draw_blockchain_graph
+import streamlit as st
+import time
 
 st.set_page_config(layout="wide")
 st.title("🔗 Crypto Blockchain Demo & Visualization")
@@ -150,3 +152,35 @@ with st.expander("🧩 Key Terms and Definitions"):
 
     **Blockchain Explorer**: Tool to view blockchain data like blocks, transactions, and addresses (e.g., blockchain.com).
     """)
+st.subheader("🕵️ Investigator’s Corner")
+
+st.markdown("""
+Use this section to guide forensic or tax officers on tracing transactions and investigating wallets:
+
+- 🔍 **Check suspicious transactions**
+- 📊 **Trace flow of funds**
+- 🔗 Use public blockchain explorers like:
+    - [blockchain.com](https://www.blockchain.com/explorer)
+    - [etherscan.io](https://etherscan.io)
+    - [btcscan.org](https://btcscan.org)
+    - [blockchair.com](https://blockchair.com)
+    - [walletexplorer.com](https://www.walletexplorer.com)
+
+---
+
+### 🛠️ Suggested Tools:
+- Chainalysis (paid)
+- CipherTrace (paid)
+- GraphSense (open-source)
+- Bitquery (API-based)
+""")
+
+
+if 'visit_count' not in st.session_state:
+    st.session_state.visit_count = 1
+else:
+    st.session_state.visit_count += 1
+
+st.markdown("---")
+st.markdown(f"👣 **Visitor Session Count**: {st.session_state.visit_count}")
+st.markdown("🔗 Hosted by Dr. Ranjit Kolkar | Built with ❤️ using Streamlit")
