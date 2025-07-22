@@ -6,7 +6,7 @@ from block_helper import render_block_detail
 import time
 
 st.set_page_config(layout="wide")
-st.title("🔗 Crypto Blockchain Demo & Visualization")
+st.title("Crypto Blockchain Demo & Visualization")
 
 if "bc" not in st.session_state:
     st.session_state.bc = Blockchain()
@@ -171,7 +171,7 @@ st.markdown(f"<div style='text-align:center; margin-top: 20px;'>🕓 <b>🔗 Bui
 st.markdown("""
     <style>
     html, body, [class*="css"]  {
-        font-size: 18px !important;
+        font-size: 15px !important;
     }
     .block-container {
         padding-top: 1rem;
