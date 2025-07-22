@@ -1,123 +1,52 @@
 import streamlit as st
-import hashlib
-import time
-from datetime import datetime
-import networkx as nx
-from pyvis.network import Network
 import streamlit.components.v1 as components
-
-# -----------------------------
-# Blockchain Core
-# -----------------------------
-
-class Block:
-    def __init__(self, index, timestamp, transactions, previous_hash, difficulty=2):
-        self.index = index
-        self.timestamp = timestamp
-        self.transactions = transactions
-        self.previous_hash = previous_hash
-        self.nonce = 0
-        self.difficulty = difficulty
-        self.hash = self.mine_block()
-
-    def compute_hash(self):
-        block_string = str(self.index) + self.timestamp + str(self.transactions) + self.previous_hash + str(self.nonce)
-        return hashlib.sha256(block_string.encode()).hexdigest()
-
-    def mine_block(self):
-        target = '0' * self.difficulty
-        while True:
-            hash_attempt = self.compute_hash()
-            if hash_attempt[:self.difficulty] == target:
-                return hash_attempt
-            self.nonce += 1
-
-class Blockchain:
-    def __init__(self):
-        self.unconfirmed_transactions = []
-        self.chain = []
-        self.create_genesis_block()
-        self.balances = {"Alice": 100, "Bob": 100, "Charlie": 100}
-
-    def create_genesis_block(self):
-        genesis = Block(0, str(datetime.utcnow()), "Genesis Block", "0")
-        self.chain.append(genesis)
-
-    def add_transaction(self, sender, receiver, amount):
-        amount = float(amount)
-        if self.balances.get(sender, 0) < amount:
-            return False
-        self.unconfirmed_transactions.append({'sender': sender, 'receiver': receiver, 'amount': amount})
-        return True
-
-    def mine(self):
-        if not self.unconfirmed_transactions:
-            return None
-        last_block = self.chain[-1]
-        block = Block(len(self.chain), str(datetime.utcnow()), self.unconfirmed_transactions, last_block.hash)
-        self.chain.append(block)
-        for txn in self.unconfirmed_transactions:
-            self.balances[txn['sender']] -= txn['amount']
-            self.balances[txn['receiver']] += txn['amount']
-        self.unconfirmed_transactions = []
-        return block
-
-# -----------------------------
-# Pyvis Graph for Blockchain
-# -----------------------------
-
-def draw_blockchain_graph(blockchain):
-    G = nx.DiGraph()
-    net = Network(height="400px", width="100%", directed=True)
-    for i, block in enumerate(blockchain.chain):
-        label = f"Block {block.index}\nHash: {block.hash[:8]}...\nTxns: {len(block.transactions)}"
-        net.add_node(i, label=label, title=block.hash, shape='box', color='lightblue')
-        if i > 0:
-            net.add_edge(i-1, i)
-    net.save_graph('blockchain_graph.html')
-    return 'blockchain_graph.html'
-
-# -----------------------------
-# Streamlit Interface
-# -----------------------------
+from blockchain import Blockchain
+from utils import draw_blockchain_graph
+from block_helper import render_block_detail
+import time
 
 st.set_page_config(layout="wide")
 st.title("🔗 Crypto Blockchain Demo & Visualization")
-st.markdown("Explore how blockchain, mining, and transactions work — interactively.")
 
 if "bc" not in st.session_state:
     st.session_state.bc = Blockchain()
 
 bc = st.session_state.bc
 
-# Sidebar - Transaction
+# Sidebar - Add Transaction
 st.sidebar.header("💸 New Transaction")
 sender = st.sidebar.selectbox("Sender", list(bc.balances.keys()))
 receiver = st.sidebar.selectbox("Receiver", [x for x in bc.balances if x != sender])
-amount = st.sidebar.number_input("Amount", min_value=1.0, max_value=1000.0, step=1.0)
+amount = st.sidebar.number_input("Amount", min_value=1.0, step=1.0)
+st.sidebar.info(f"Transaction Fee: {bc.transaction_fee}")
 
 if st.sidebar.button("➕ Add Transaction"):
     if bc.add_transaction(sender, receiver, amount):
         st.sidebar.success("Transaction added.")
     else:
-        st.sidebar.error("Insufficient funds.")
+        st.sidebar.error("Insufficient balance.")
 
+# Sidebar - Mine Block
+miner = st.sidebar.selectbox("Select Miner", list(bc.balances.keys()) + ["Miner"])
 if st.sidebar.button("⛏️ Mine Block"):
-    with st.spinner("Mining block..."):
-        block = bc.mine()
+    with st.spinner("Mining..."):
+        start = time.time()
+        block = bc.mine(miner)
+        duration = time.time() - start
         if block:
-            st.sidebar.success(f"Block {block.index} mined!")
+            st.sidebar.success(f"Block #{block.index} mined by {miner} in {duration:.2f}s!")
         else:
             st.sidebar.warning("No transactions to mine.")
 
-# Wallets
+# Wallet Balances
 st.subheader("💰 Wallet Balances")
 st.table(bc.balances)
 
 # Pending Transactions
 st.subheader("📬 Pending Transactions")
 if bc.unconfirmed_transactions:
-    st.json(bc.unconfirmed_transactions)
+    for txn in bc.unconfirmed_transactions:
+        st.write(f"📤 **{txn['sender']}** → 📥 **{txn['receiver']}** | 💰 {txn['amount']} | 🪙 Fee: {txn['fee']}")
 else:
     st.write("No pending transactions.")
 
@@ -125,51 +54,128 @@ else:
 st.subheader("📚 Blockchain Ledger")
 for block in reversed(bc.chain):
     with st.expander(f"Block #{block.index}"):
-        st.write(f"**Timestamp:** {block.timestamp}")
-        st.write(f"**Nonce:** {block.nonce}")
-        st.write(f"**Transactions:**")
-        st.json(block.transactions)
-        st.code(f"Hash: {block.hash}")
-        st.code(f"Previous Hash: {block.previous_hash}")
+        render_block_detail(block)
 
-# Visual Graph
+# Blockchain Graph
 st.subheader("🕸️ Blockchain Chain Graph")
 html_path = draw_blockchain_graph(bc)
 components.html(open(html_path, 'r', encoding='utf-8').read(), height=450)
 
-# Concepts Section
-st.subheader("📖 Key Blockchain Concepts")
+# Optional: Validity Check
+st.markdown("✅ Chain Validity: " + ("✔️ Valid" if bc.is_chain_valid() else "❌ Invalid"))
 
-with st.expander("🧱 What is a Blockchain?"):
-    st.markdown("""
-    - A chain of digital blocks containing transaction data.
-    - Each block has a hash linking to the previous block.
-    - Ensures transparency, immutability, and public verifiability.
-    """)
+# Learn Tab
+learn_tab, = st.tabs(["📘 Learn"])
 
-with st.expander("⛏️ What is Mining?"):
-    st.markdown("""
-    - Mining is solving a computational puzzle (proof-of-work) to add a new block.
-    - Ensures no one can add false transactions.
-    - In real blockchains, miners earn rewards for doing this.
-    """)
+with learn_tab:
+    st.subheader("📖 Blockchain Concepts & Explorer Terms")
 
-with st.expander("🔐 Cryptography & Hashing"):
-    st.markdown("""
-    - Hashing ensures data integrity — even 1 character change makes a new hash.
-    - Digital signatures ensure only wallet owners can authorize transfers.
-    """)
+    with st.expander("🧱 What is a Blockchain?"):
+        st.markdown("""
+        - A **blockchain** is a secure, distributed digital ledger.
+        - It records transactions in **blocks** that are cryptographically linked (via hashes).
+        - Once added, blocks cannot be modified (immutability).
+        - **Decentralized**: No central authority.
+        - **Public or private** depending on use case.
+        """)
 
-with st.expander("🔍 Immutability & Transparency"):
-    st.markdown("""
-    - Once a block is mined, it cannot be altered without changing all future blocks.
-    - Anyone can verify transactions using public explorers.
-    """)
+    with st.expander("📦 Block Parameters Explained (like blockchain.com)"):
+        st.markdown("""
+        Each block contains several important fields:
 
-with st.expander("🧾 Why Important for Investigations"):
-    st.markdown("""
-    - Transactions are public and permanent — ideal for tracing assets.
-    - Wallet addresses can be mapped to individuals via exchanges or devices.
-    - Helps detect undeclared crypto gains and suspicious financial activity.
-    """)
+        - `index`: The position of the block in the chain.
+        - `timestamp`: When the block was created.
+        - `transactions`: List of transaction objects included in the block.
+        - `nonce`: Number miners change to find a valid hash.
+        - `difficulty`: How hard it is to mine the block (affects required hash).
+        - `hash`: Unique fingerprint of the block, generated using SHA-256.
+        - `previous_hash`: Hash of the previous block, ensuring chain integrity.
 
+        **Example from this app:**
+        ```json
+        {
+            "index": 3,
+            "timestamp": "2025-07-22T18:20:45Z",
+            "transactions": [
+                {"sender": "Alice", "receiver": "Bob", "amount": 10.0, "fee": 1.0}
+            ],
+            "nonce": 20482,
+            "hash": "0000abc123...xyz",
+            "previous_hash": "0000cde456...abc"
+        }
+        ```
+        """)
+
+    with st.expander("💳 Transaction Parameters Explained"):
+        st.markdown("""
+        Each transaction contains:
+
+        - `sender`: Wallet address or name sending the amount.
+        - `receiver`: The recipient's wallet or address.
+        - `amount`: How much crypto is sent.
+        - `fee`: Transaction fee (rewarded to the miner).
+        
+        **Optional (not in this demo but used in real blockchains):**
+        - `signature`: Digital signature to verify authenticity.
+        - `txid`: Unique transaction ID.
+        - `timestamp`: When the transaction was created.
+        """)
+
+    with st.expander("🔐 Cryptographic Concepts"):
+        st.markdown("""
+        - **Hash Function (SHA-256)**: Converts data into a fixed 64-character string. Used for block hashes.
+        - **Nonce**: A number that miners adjust to get a valid hash.
+        - **Proof of Work (PoW)**: Requires computation to mine a block.
+        - **Digital Signatures**: Verify sender identity in real blockchain networks.
+        - **Merkle Root**: Root hash of a tree of transactions (not shown in this app, but used in Bitcoin).
+        """)
+
+    with st.expander("🧾 Glossary of Key Terms"):
+        st.markdown("""
+        - **Genesis Block**: First block in any blockchain.
+        - **Wallet**: Software or hardware to send, receive, and store crypto.
+        - **Address**: Public key hash, used to identify a wallet.
+        - **Private Key**: Secret key used to sign transactions.
+        - **Miner**: Participant who validates transactions and mines blocks.
+        - **Consensus Mechanism**: Rules for how blocks are validated (e.g., PoW, PoS).
+        - **Smart Contract**: Code that runs on blockchain (e.g., Ethereum).
+        - **Token**: An asset built on top of a blockchain (e.g., ERC-20).
+        - **Fork**: Split in blockchain rules (hard fork or soft fork).
+        - **Blockchain Explorer**: Website showing blocks, transactions, wallets (e.g., blockchain.com).
+        """)
+
+    with st.expander("🔍 For Investigators / Analysts"):
+        st.markdown("""
+        - Blockchain is public and immutable: good for tracing digital assets.
+        - Tools like **Chainalysis**, **CipherTrace**, or **GraphSense** help visualize flows.
+        - KYC-compliant exchanges can de-anonymize wallets.
+        - Each transaction can be linked using:
+            - Wallet address
+            - Time/date
+            - Amounts
+            - Previous transactions
+        """)
+
+# Footer
+st.markdown("---")
+
+from datetime import datetime
+
+# 👣 Visitor count already exists above
+
+# 🕓 Last Updated Timestamp
+now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+st.markdown(f"<div style='text-align:center; margin-top: 20px;'>🕓 <b>🔗 Built by Coding Club: Dr. Ranjit Kolkar, Last Updated:</b> {now}</div>", unsafe_allow_html=True)
+
+# 🖋️ Inject custom CSS to increase font size
+st.markdown("""
+    <style>
+    html, body, [class*="css"]  {
+        font-size: 18px !important;
+    }
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
