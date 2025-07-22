@@ -38,8 +38,9 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.unconfirmed_transactions = []
-        self.balances = {"Alice": 100, "Bob": 100, "Charlie": 100}
-        self.transaction_fee = 1.0  # Fixed fee per transaction
+        self.balances = {"Ravi": 100, "Priya": 100, "Anil": 100}
+        self.transaction_fee = 1.0  # Fixed fee per transaction (₹1)
+
         self.create_genesis_block()
 
     def create_genesis_block(self):
